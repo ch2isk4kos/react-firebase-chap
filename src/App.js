@@ -1,22 +1,15 @@
-import React, { userRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import "./App.css";
 // firebase
 import firebase from "firebase/app"; // sdk
 import "firebase/firestore"; // database
 import "firebase/auth"; // authentication
+import "firebase/analytics"; // analytics
 // react-firebase-hooks
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 
-firebase.initializeApp({
-  apiKey: `${process.env.REACT_APP_API_KEY}`,
-  authDomain: `${process.env.REACT_APP_AUTH_DOMAIN}`,
-  projectId: `${process.env.REACT_APP_PROJECT_ID}`,
-  storageBucket: `${process.env.REACT_APP_STORAGE_BUCKET}`,
-  messagingSenderId: `${process.env.REACT_APP_MESSAGING_SENDER_ID}`,
-  appId: `${process.env.REACT_APP_APP_ID}`,
-  measurementId: `${process.env.REACT_APP_MEASUREMENT_ID}`,
-});
+firebase.initializeApp({});
 
 const auth = firebase.auth();
 const firestore = firebase.firestore();
@@ -45,7 +38,7 @@ const App = () => {
   function SignOut() {
     return (
       auth.currentUser && (
-        <button className="sign-out" onClick={() => auth.SignOut()}>
+        <button className="sign-out" onClick={() => auth.signOut()}>
           Sign Out
         </button>
       )
@@ -53,10 +46,10 @@ const App = () => {
   }
 
   // Chatroom
-  function Chatroom() {
+  function ChatRoom() {
     const messagesPool = firestore.collection("messages"); // reference to a point in the firestore database
     const query = messagesPool.orderBy("createdAt").limit(25); // query for a subset of documents
-    const scroll = useRef();
+    const dummy = useRef();
 
     // listen for updates to data in realtime with useCollectionData hook:
     const [messages] = useCollectionData(query, { idField: "id" }); // returns an array of objects -> each object is a chat message in the database
@@ -74,14 +67,15 @@ const App = () => {
         photoURL,
       });
       setFormValue("");
-      scroll.current.scrollIntoView({ behavior: "smooth" });
+      dummy.current.scrollIntoView({ behavior: "smooth" });
     };
+
     return (
       <>
         <main>
           {messages &&
             messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
-          <span ref={scroll}></span>
+          <span ref={dummy}></span>
         </main>
         <form onSubmit={sendMessage}>
           <input
@@ -97,10 +91,23 @@ const App = () => {
     );
   }
 
+  function ChatMessage(props) {
+    const { text, uid, photoURL } = props.message;
+    const messageClass = uid === auth.currentUser.uid ? "sent" : "received";
+
+    return (
+      <div className={`message ${messageClass}`}>
+        <img src={photoURL || "https://adorable.io/avatars/image.png"} />
+        <p>{text}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
       <header className="App-header">
-        <h2>Welcome</h2>
+        <h2>Web Chat Application</h2>
+        <SignOut />
       </header>
       <section>{user ? <ChatRoom /> : <SignIn />}</section>
     </div>
