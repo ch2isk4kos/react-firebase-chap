@@ -23,6 +23,15 @@ const firestore = firebase.firestore();
 const App = () => {
   const [user] = useAuthState(auth);
 
+  // user sign in
+  function SignIn() {
+    const signInWithGoogle = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider);
+    };
+    return <button onClick={signInWithGoogle}>Sign in with Google</button>;
+  }
+
   return (
     <div className="App">
       <header className="App-header">
