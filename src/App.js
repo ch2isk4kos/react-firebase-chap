@@ -1,3 +1,4 @@
+import React, { userRef, useState } from "react";
 import "./App.css";
 // firebase
 import firebase from "firebase/app"; // sdk
@@ -19,6 +20,7 @@ firebase.initializeApp({
 
 const auth = firebase.auth();
 const firestore = firebase.firestore();
+const analytics = firebase.analytics();
 
 const App = () => {
   const [user] = useAuthState(auth);
@@ -29,15 +31,69 @@ const App = () => {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider);
     };
-    return <button onClick={signInWithGoogle}>Sign in with Google</button>;
+    return (
+      <>
+        <button className="sign-in" onClick={signInWithGoogle}>
+          Sign in with Google
+        </button>
+        <p>Please respect the community guidelines</p>
+      </>
+    );
   }
 
   // user sign out
   function SignOut() {
     return (
       auth.currentUser && (
-        <button onClick={() => auth.SignOut()}>Sign Out</button>
+        <button className="sign-out" onClick={() => auth.SignOut()}>
+          Sign Out
+        </button>
       )
+    );
+  }
+
+  // Chatroom
+  function Chatroom() {
+    const messagesPool = firestore.collection("messages"); // reference to a point in the firestore database
+    const query = messagesPool.orderBy("createdAt").limit(25); // query for a subset of documents
+    const scroll = useRef();
+
+    // listen for updates to data in realtime with useCollectionData hook:
+    const [messages] = useCollectionData(query, { idField: "id" }); // returns an array of objects -> each object is a chat message in the database
+    const [formValue, setFormValue] = useState("");
+
+    const sendMessage = async (e) => {
+      e.preventDefault();
+
+      const { uid, photoURL } = auth.currentUser;
+
+      await messagesPool.add({
+        text: formValue,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        uid,
+        photoURL,
+      });
+      setFormValue("");
+      scroll.current.scrollIntoView({ behavior: "smooth" });
+    };
+    return (
+      <>
+        <main>
+          {messages &&
+            messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
+          <span ref={scroll}></span>
+        </main>
+        <form onSubmit={sendMessage}>
+          <input
+            value={formValue}
+            onChange={(e) => setFormValue(e.target.value)}
+            placeholder="write message"
+          />
+          <button type="submit" disabled={!formValue}>
+            Send
+          </button>
+        </form>
+      </>
     );
   }
 
@@ -46,9 +102,12 @@ const App = () => {
       <header className="App-header">
         <h2>Welcome</h2>
       </header>
-      {/* <section>{user ? <ChatRoom /> : <SignIn />}</section> */}
+      <section>{user ? <ChatRoom /> : <SignIn />}</section>
     </div>
   );
 };
 
 export default App;
+
+// https://www.youtube.com/watch?v=zQyrwxMPm88
+// left off 4:20
