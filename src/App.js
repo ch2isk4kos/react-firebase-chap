@@ -7,6 +7,10 @@ import "firebase/auth"; // authentication
 import { useAuthState } from "reacct-firebase-hooks/auth";
 import { useCollectionData } from "reacct-firebase-hooks/firestore";
 
+firebase.initializeApp({
+  //
+});
+
 function App() {
   return (
     <div className="App">
