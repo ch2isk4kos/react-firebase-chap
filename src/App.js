@@ -32,11 +32,21 @@ const App = () => {
     return <button onClick={signInWithGoogle}>Sign in with Google</button>;
   }
 
+  // user sign out
+  function SignOut() {
+    return (
+      auth.currentUser && (
+        <button onClick={() => auth.SignOut()}>Sign Out</button>
+      )
+    );
+  }
+
   return (
     <div className="App">
       <header className="App-header">
         <h2>Welcome</h2>
       </header>
+      {/* <section>{user ? <ChatRoom /> : <SignIn />}</section> */}
     </div>
   );
 };
